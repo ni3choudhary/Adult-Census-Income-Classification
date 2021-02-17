@@ -1,0 +1,2552 @@
+
+
+#PROJECT ON CENSUS INCOME DATASET
+
+<h1 id="top11">Table of Contents</h1>
+
+<ol type="1">
+<li><a href="#top12">Objective</a></li> 
+<li><a href="#top">Exploratory Data Analysis</a></li>
+<ol type="a">
+
+<li><a href="#top6">Summary of Dataset</a></li>
+<li><a href="#top7">Cleaning Data</a></li>
+<li><a href="#top8">Univariate Distribution</a></li>
+<ul style="list-style-type:square;"><li><a href="#top13">Conclusion-Univariate Distribution</a></li></ul>
+<li><a href="#top9">Bivariate Distribution</a></li>
+<ul style="list-style-type:square;"><li><a href="#top14">Conclusion-Bivariate Distribution</a></li></ul>
+<li><a href="#top10">Multivariate Distibution</a></li>
+<ul style="list-style-type:square;"><li><a href="#top15">Conclusion-Multivariate Distribution</a></li></ul>
+</ol> 
+<li><a href="#top1">Predictive Modeling</a></li>
+
+<ul style="list-style-type:disc;">
+<li><a href="#top2">Logistic Regression Model</a></li>
+<li><a href="#top3">Decision Tree Model</a></li>
+<li><a href="#top4">Random Forest Model</a></li>
+</ul>
+<li><a href="#top5">Conclusion</a></li>
+</ol>
+
+
+
+<h1 id="top12"><u>Objective</u></h1>
+In this project, we will use the US census data to build a model to predict if the income of any individual in the US is greater than or less than USD 50000 based on the information available about that individual in the census data.
+
+The dataset used for the analysis is an extraction from the 1994 census data by Barry Becker and donated to the public site http://archive.ics.uci.edu/ml/datasets/Census+Income. This dataset is popularly called the "Adult" data set.
+We will use different visualization techniques to conduct a preliminary analysis of the impact of different variables on each other and finally we will predict whether a person makes over 50K a year.
+
+
+<h1 id="top"><u>Exploratory Data Analysis</u></h1>
+
+###Reading the Dataset
+
+```{r}
+adult <- read.csv("C:/Users/u22v05/Desktop/dataset/adult.txt", header=FALSE)
+adult
+adult <- setNames(adult,c("age","Workclass","fnlwgt","education","educationnum","maritalstatus","occupation","relationship","race","sex","capitalgain","capitalloss","hoursperweek","nativecountry","salary")) #changing column names for convinience
+library(DataExplorer)
+
+```
+
+###Loading necessary packages for this analysis:
+
+```{r}
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(corrplot)
+library(descr)
+library(knitr)
+```
+
+###Data Description
+
+```{r}
+dim(adult)[1]
+```
+
+<ul style="list-style-type:disc;"><li>This indicates that the  total number of records in the file "adult.data" is 32561.</li></ul>
+
+```{r}
+dim(adult)[2]
+
+```
+<ul style="list-style-type:disc;"><li>
+Originally in the adult data set there are 14 attributes but here we have included 15th attribute which is salary which describes whether the salary is >50k or not.</li></ul>
+
+```{r}
+str(adult)
+```
+
+
+
+
+###Input variables in the dataset are:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+output <- 
+  matrix(paste(c("Age","Age of the individual","Continuous","Numeric","Workclass","Class of Work","Categorical","Private, Self-emp-not-inc, Self-emp-inc, Federal-gov, Local-gov, State-gov, Without-pay, Never-worked","fnlwgt","Final Weight Determined by Census Org","Continuous","Numeric","Education","Education of the individual","Ordered Factor","Bachelors, Some-college, 11th, HS-grad, Prof-school, Assoc-acdm, Assoc-voc, 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool","Education-num","Number of years of education","Continuous","Numeric","Marital-status","Marital status of the individual","Categorical","Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse","Occupation","Occupation of the individual","Categorical","Tech-support, Craft-repair, Other-service, Sales, Exec-managerial, Prof-specialty, Handlers-cleaners, Machine-op-inspct, Adm-clerical, Farming-fishing, Transport-moving, Priv-house-serv, Protective-serv, Armed-Forces","Relationship","Present relationship","Categorical","Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried","Race","Race of the individual","Categorical","White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black","Sex","Sex of the individual","Categorical","Female, Male","Capital-gain","Capital gain made by the individual","Continuous","Numeric","Capital-loss","Capital loss made by the individual","Continuous","Numeric","Hours-per-week","Average number of hours spent by the individual on work","Continuous","Numeric","Native-country","Average number of hours spent by the individual on work","Categorical","United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&Tobago, Peru, Hong, Holand-Netherlands")), 
+         ncol=4, byrow = TRUE)
+library(htmlTable)
+htmlTable( output, header = paste(c("Variable Name","Description","Type","Possible Values")), css.cell = rbind(rep("background: lightblue;", times=ncol(output)),matrix("", ncol=ncol(output), nrow=nrow(output))), col.rgroup = c("none", "light grey"))
+```
+####Detailed Description of variables:
+
+
+<ol type="1">
+<li> <b>age:</b>the age of an individual- Continuous.(numeric)</li>
+<li> <b>workclass:</b> a term to represent the employment status of an individual:Private, Self-emp-not-inc(Self employed not incorporated-Refers to people who work for themselves in corporate entities.), Self-emp-inc(Self employed incorporated-Refers to people who work for themselves in corporate entities.), Federal-gov(Federal Government), Local-gov(local government), State-gov(State Government), Without-pay, Never-worked.(Categorical)</li>
+
+<li><b>fnlwgt(final weight):</b>In other words, this is the number of people the census believes the entry represents..-Continuous.(numeric)</li>
+
+<li><b>education: </b>The highest level of education achieved by an individual:Bachelors, Some-college, 11th, HS-grad(High School Graduate), Prof-school(Professional school), Assoc-acdm(Associates degree-academic program), Assoc-voc(Associates degree-vocational), 9th, 7th-8th, 12th, Masters, 1st-4th, 10th, Doctorate, 5th-6th, Preschool.(Categorical)</li>
+
+<li><b>education-num:</b>Number of years of education in total,which is a continuous representation of the variable education(Continuous) </li>
+
+<li><b>maritalstatus:</b>Marital status of an individual. Married-civ-spouse corresponds to a civilian spouse while Married-AF-spouse is a spouse in the Armed Forces.- Married-civ-spouse, Divorced, Never-married, Separated, Widowed, Married-spouse-absent, Married-AF-spouse.(Categorical)</li>
+
+<li><b>occupation:</b> the general type of occupation of an individual: Tech-support(Techinical support), Craft-repair(Does not require high education,just repairing works), Other-service, Sales, Exec-managerial(Executive manager), Prof-specialty(Speciality in a particular profession), Handlers-cleaners, Machine-op-inspct(Machine operator inspector), Adm-clerical(Admin Clerical), Farming-fishing, Transport-moving, Priv-house-serv(Private house servant), Protective-serv(Protective Servant), Armed-Forces(Working in army).(Categorical)</li>
+
+<li><b>relationship:</b>represents what this individual is relative to others- Wife, Own-child, Husband, Not-in-family, Other-relative, Unmarried.(Categorical)</li>
+
+<li><b>race:</b>Descriptions of an individual's race- White, Asian-Pac-Islander, Amer-Indian-Eskimo, Other, Black.(Categorical)</li>
+
+<li><b>sex: </b>the biological sex of the individual- Female, Male.(Categorical)</li>
+
+<li><b>capitalgain:</b>(income from investment sources other than salary) Continuous.(numeric)</li>
+
+<li><b>capitalloss:</b>(income from investment sources other than salary) Continuous.(numeric)</li>
+
+<li><b>hoursperweek:</b>(Total number of hours a person work in week ) Continuous.(numeric)</li>
+
+<li><b>nativecountry:</b>Country of origin of the participant: United-States, Cambodia, England, Puerto-Rico, Canada, Germany, Outlying-US(Guam-USVI-etc), India, Japan, Greece, South, China, Cuba, Iran, Honduras, Philippines, Italy, Poland, Jamaica, Vietnam, Mexico, Portugal, Ireland, France, Dominican-Republic, Laos, Ecuador, Taiwan, Haiti, Columbia, Hungary, Guatemala, Nicaragua, Scotland, Thailand, Yugoslavia, El-Salvador, Trinadad&Tobago, Peru, Hong, Holand-Netherlands.(Categorical)</li>
+
+<li> <b>salary:</b>whether salary is >50K or <=50K per year?- >50K ,<=50K(Categorical)</li>
+</ol>
+
+<h2 id="top6">Summary of Dataset</h2>
+
+
+```{r}
+summary(adult) #summary of dataset
+
+```
+
+
+####Summary function generates the summary statistics of each variable.There are total 15 attributes out of which 8 are categorical and 7 are numerical.
+
+<ol type="1">
+<li>Age</li>
+<ul style="list-style-type:square;">
+<li>The summary statisitcs of age tells us that mean age is 38.5 years and median age is 37 years which shows that maximum participants are of working age .Mean is greater median shows that the graph will be right skewed.</li>
+<li>Minimum age of a participant is 17 years whereas maximum age is 90 years ,these two are extreme values.This indicates that there are few participants who are earning either by working or through capital gain even at he age 17 and 90 years.</li>
+<li>25% of the participants comes under the age of 28.</li>
+<li>50 % of the participants comes under the age of 37 which again indicates that mostly young people who are  working is being considered.</li>
+<li>75% of the participants comes under the age of 48 years shows that majority people who are working and are in their 30s and 40s are being considered.</li>
+</ul>
+
+<li>Workclass</li>
+<ul style="list-style-type:square;">
+<li>The summary statisitcs of Workclass shows that maximum number of participants are in "Private" job i.e. 22696.</li>
+<li>The number of participants in "Self-employed-not incorporated" category are 2541.</li>
+<li>The number of participants in "Local government" are 2093.</li>
+<li>1836 values are missing.</li>
+<li>The number of participants in "State government" category are 1298. </li>
+<li>The number of participants in "Self-employed-not incorporated" category are 1116.</li>
+<li>The number of participants in "Self-employed incorporated" category are 981.</li>
+<li>This statistics shows that more than 50% of the participants are in "Private " job means majority of people are working in private sector.</li>
+</ul>
+<li>Final Weight:</li>
+<ul style="list-style-type:square;">
+<li>Minimum number of 12285 people of population have similar characteristic to a particular record of adult dataset.</li>
+<li>Maximum number of 1484705 people of population have similar characteristic to a particular record of adult dataset.</li>
+<li>117827 indicates the 25% of total population of US in 1994.</li>
+<li>178356 indicates the 50% of total population of US in 1994.</li>
+<li>237051 indicates the 75% of total population of US in 1994.</li>
+<li>On an avegare 189778 people have similar characteristic to a particular record of adult dataset.
+<li>The total sum of the final weight column gives the whole population of US in 1994.</li>
+</ul>
+<li>Education:</li>
+<ul style="list-style-type:square;">
+<li>1175 participants are of 11th grade.</li>
+<li>Maximum participants are High school graduate i.e. 10501.</li>
+<li>7291 participants are of some college but they don't have a degree.</li>
+<li>1382 participants holds Associates degree(vocational)</li>
+<li>5355 participants hold Bachelors degree(Example-BA AB BS)</li>
+<li>1723 participants holds Masters degree(Like MA MS MEng MEd MSW MBA)</li>
+<li>5134 participants are of other categories.</li>
+<li>Again division is non homogeneous because maximum participants are high school graduate.</li>
+</ul>
+<li>Education Number</li>
+<ul style="list-style-type:square;">
+<li>Minimum number of years for which a participant has studied is 1 year whereas the maximum number of years of education is 16 years.</li>
+<li>25% of the population has studied for 9 years.</li>
+<li>75% of the population has studied for 12 years.</li>
+<li>Mean is 10.08 years whereas median is 10.00 years which shows that thereia almost symmetrical distribution of the data.</li>
+</ul>
+<li>Marital-Status</li>
+<ul style="list-style-type:square;">
+<li>Maximum number of participants are Married to civilian spouse i.e. 14976 which is about half of the participants.</li>
+<li>10683 participants never got married which is second highest.
+<li>4443 people are divorced.</li>
+<li>1025 people are separated from their spouse.
+<li>993 people are widowed.</li>
+<li>418 participant's spouse is absent.</li>
+<li>Least number of participants are married to Army Force Spouse.</li>
+<li> we can see the non homogeneous distribution of data.</li>
+</ul>
+<li>Occupation</li>
+<ul style="list-style-type:square;">
+<li>The occupation statistics shows us the frequency of participants indulged in different occupation.The division is almost balanced which can be observed from the below data.</li>
+<li>Participants of occupation "Admin support including clerical" is 3770.</li>
+<li>Participants of occupation Professional specialty is 4140.</li>
+<li>Participants of occupation Executive admin and managerial 4066.</li>
+<li>Participants who are in Other servicea are 3295.</li>
+<li>Participants indulged in Sales are 3650.</li>
+<li>Participants of occupation "Precision production craft & repair" is 4099.</li>
+<li>Participants indulged in other occupation is 9541.</li>
+</ul>
+<li>Relationship</li>
+<ul style="list-style-type:square;">
+<li>The summary statistics of relationship shows the frequency of participants having a particular relationship with others in family.</li>
+<li>Participants who are Husband is 13193 which is maximum in number .It can be seen in reality  mostly male members are working in a family.</li>
+<li>8305 people dont have a family which is second highest.</li>
+<li>Participants who are wives are 1568.</li>
+<li>3446 people are unmarried.</li>
+<li>5068 are own-child.(Basically these are the people who are single,they maybe married or not.)
+<li>981 people are the "other relatives" of other people.</li>
+</ul>
+<li>Race</li>
+<ul style="list-style-type:square;">
+<li>The summary statistics of race tells us the number of participants belonging to a particular race.There is unbalanced distribution because more than 50% of the participant are of white race.</li>
+<li>White participants are maximum i.e. 27816 as most of the people living in US are of white race.</li>
+<li>Black people are 3124.</li>
+<li>Asian or Pacific Islander participants are 1039.</li>
+<li>Participants of Other race are 3124.</li>
+<li>Amer Indian Eskimo 311 which is least in number.</li>
+</ul>
+<li>Sex</li>
+<ul style="list-style-type:square;">
+<li>Summary statistics of sex tells us about the number of male and female participants.</li>
+<li>Male participants are 21790.</li>
+<li> participants are 10771.</li>
+<li>Male participants are double of females as in reality working males are higher than females.The distribution of data is unbalanced.</li>
+</ul>
+<li>Capital Gain</li>
+<ul style="list-style-type:square;">
+<li>Summary statistics of Capital Gain tells us about the gain of a participant from other sources apart from working.</li>
+<li>Maximum Capital Gain is 99999 whereas minimum capital gain is 0.</li>
+<li>It is observed that 75% of the population has 0 capital gain.</li>
+<li>We get the mean capital gain as 1078 whereas median 0 means data is highly right skewed.</li>
+</ul>
+<li>Capital Loss</li>
+<ul style="list-style-type:square;">
+<li>Summary statistics of Capital loss tells us about the loss of participants from other sources apart from working.</li>
+<li>Maximum Capital loss is 4356 whereas minimum capital loss is 0.</li>
+<li>It is observed that 75% of the population has 0 capital loss.</li>
+<li>We get the mean capital loss as 87 whereas median is 0 which means data is right skewed.</li>
+</ul>
+
+<li>Hours Per week</li>
+<ul style="list-style-type:square;">
+<li>Minimum working hour per week is 1 hour.</li>
+<li>Maximum working hours per week is 99 hours.</li>
+<li>Mean working hours of a week for 25% of poppulation is 40 hours.</li>
+<li> working hours of a week for 75% of poppulation is 45 hours.</li>
+<li>Mean working hours of a week for 50% of the population is 40.44 hours where as median is 40 hours. Mean and median are almost equal which shows the symmetrical distribution of data..</li>
+</ul>
+<li>Native Country</li>
+<ul style="list-style-type:square;">
+<li>The summary statistics of native country tells us the number of participants belonging to a particular country originally.</li>
+<li>29170 participants are originally from United States.</li>
+<li>643 participants are originally from Mexico.</li>
+<li>198 participants are originally from Philippines.</li>
+<li>137 participants are originally from Germany.</li>
+<li>121 participants are originally from Canada.</li>
+<li>1709 participants are originally from Other countries.</li>
+<li>Data is highly unbalanced as maximum participants are from US.</li>
+</ul>
+<li>Salary</li>
+<ul style="list-style-type:square;">
+<li>24720 people have salary <=50k whereas 7841 people have salary >50k.This shows the unbalanced distribution of data.</li>
+</ul>
+</ol>
+
+<h2 id="top7">CLEANING DATA</h2>
+
+
+```{r}
+library(tidyr)
+#There are some missing valus in given dataset so we are replacing these missing values with NAs
+idx <- adult == " ?"   #finding out '?' in dataset and replacing them with NA
+is.na(adult) <- idx
+colSums(is.na(adult))  #finding out number of NA
+plot_missing(adult)
+```
+<ul style="list-style-type:square;">
+<li>From the above table we can see that there are 1836 missing values in Workclass variable ,1843 missing values in Occupation variable and 583 missing values in Native country column.</li>
+<li>Here we have NAs present in 3 categorical variables.It is neccessary to treat the missing values because some classification algorithm will fail if they are passed with data containing missing values.</li>
+<li>Treating NAs :We can treat NAs in the following ways.</li>
+<ol type="1">
+<li>DROPPING NULL OR MISSING VALUES-This is the fastest and easiest step to handle missing values. However, it is not generally advised. This method reduces the quality of our model as it reduces sample size because it works by deleting all other observations where any of the variable is missing.</li>
+<li>FILL MISSING VALUES WITH TEST STATISTIC-This is the most common method of handling missing values. This is a process whereby missing values are replaced with a test statistic like mean, median or mode of the particular feature the missing value belongs to.For categorical variables,we can replace missing values by frequently occuring value in that column.</li>
+<li>PREDICTIVE MODEL FOR HANDLING MISSING DATA-Depending on the class of data that is missing, one can either use a regression model or classification to predict missing data. This works by turning missing features to labels themselves and now using columns without missing values to predict columns with missing values.</li>
+</ol>
+</ul>
+```{r}
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+adult <- lapply(adult, function(x) {
+    if(is.factor(x)) replace(x, is.na(x), Mode(na.omit(x)))
+    else if(is.numeric(x)) replace(x, is.na(x), mean(x, na.rm=TRUE))
+    else x
+})
+adult <- as.data.frame(adult)
+colSums(is.na(adult))
+```
+<ul style="list-style-type:square;"><li>
+Replaced missing values with frequently occuring value of that variable not with mean value because NAs are present in categorical variable and we cannot find it's mean and omiting NAs will reduce size of data.</li>
+</ul>
+
+
+<h2 id="top8">Univariate Distribution</h2>
+
+
+###Analysis of variable "Salary"
+
+
+
+```{r}
+library(scales)
+
+ggplot(adult,aes(x = adult$salary, fill = adult$salary)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=5) +labs(x = "Salary",  y = "",fill = "Salary") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1)) + scale_y_continuous(labels = percent)
+```
+<ul style="list-style-type:disc;"><li>
+The graph above shows us that 75.9% of people earn less than or equal to 50k means the data is unbalanced and we may get biased results that salary is usually less than or equal to 50k.</li>
+</ul>  
+
+
+###Analysis of variable "Age"
+
+```{r}
+ggplot(data =adult, aes(age)) + 
+  geom_density(alpha = 0.2,fill="pink") +
+  scale_x_continuous(breaks = seq(0, 95, 5))
+```
+
+<ul style="list-style-type:disc;"><li>
+Above graph shows that majority of working population lies in the age group of 20 to 50 years this situation is reasonable in reality beacause working age of people lies in this range only.As the age increases after 37 years there is decrease in working class people.There are some outliers, such as individuals who are 77 years or above are also earning either by capital gain or by working. </li>
+</ul>
+
+
+
+
+```{r}
+aduage <- select(adult,age)
+aduage2 <- filter(aduage,age>27 & age<47)
+count(aduage2)
+```
+<ul style="list-style-type:disc;"><li>
+Above count clearly shows us maximum participants are of age 27 to 47 years.</li>
+</ul>
+
+###Analysis of variable "Work class"
+
+```{r}
+
+ggplot(adult,aes(x = adult$Workclass, fill = adult$Workclass)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Workclass",  y = "",fill = "Workclass") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1, angle=90)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Work Class")
+```
+<ul style="list-style-type:disc;"><li>
+The above bar plot of the Work Class indicates that we will find  maximum participants that is 75.3% people are working in the private job and there is no participant who never worked.</li>
+</ul>
+
+```{r}
+table(adult$Workclass)
+```
+<ul style="list-style-type:disc;">
+  <li>Maximum people work in private jobs that is 24532</li>
+  <li>2541 people are "self employed not incorporated" which is second highest after the people in private jobs   </li>
+ <li> The number of participants in "State government" category are 1298 </li>
+<li> The number of participants in "Self-employed-not incorporated" category are 1116</li>
+<li> The number of participants in "Self-employed incorporated" category are 960</li>
+<li>The difference between in private job and people working in any other category is very huge which shows majority of participants works in private job.</li>
+</ul>
+
+
+###Analysis of variable "Education"
+
+```{r}
+
+ggplot(adult,aes(x = adult$education, fill = adult$education)) +geom_bar(aes(y = (..count..)/sum(..count..))) +geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Education",  y = "",fill = "Education") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1, angle=90)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Education")
+
+```
+<ul style="list-style-type:disc;">
+<li>The above barplot of Education gives the inference that the maximum number of people are High School Graduate and minimum number of participant belongs to 1st-4th class and preschool which is relatable situation because during school usually kids don't work and after graduating from high school, students start living on their own in US.</li>
+</ul>
+
+```{r}
+table(adult$education)
+```
+
+<ul style="list-style-type:disc;">
+
+<li>1175 participants are of 11th grade.</li>
+<li>Maximum participants are High school graduate i.e. 10501.</li>
+<li>7291 participants are of some college but they don't have a degree.</li>
+<li>1382 participants holds Associates degree(vocational)</li>
+<li>5355 participants hold Bachelors degree(Example-BA AB BS)</li>
+<li>1723 participants holds Masters degree(Like MA MS MEng MEd MSW MBA)</li>
+</ul>
+
+###Analysis of variable "Marital Status"
+
+```{r}
+
+ggplot(adult,aes(x = adult$maritalstatus, fill = adult$maritalstatus)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Marital Status",  y = "",fill = "Marital Status") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1, angle=90)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Marital Status")
+
+```
+<ul style="list-style-type:disc;"><li>
+A person married to a civilian spouse is more likely to work as civilians are more educated and people who never married are more as these are college going or High School graduate students who were large in number.</li>
+</ul>
+
+```{r}
+table(adult$maritalstatus)
+```
+<ul style="list-style-type:disc;">
+<li>The count of people married to civilian spouse is 14976 which clearly indicates that most of the working class people are married and educated.</li>
+<li>10683 people who never married are second highest in number these are college going or High School graduate students who were large in number.</li>
+<li>4443 people are divorced.</li>
+<li>1025 people are separated from their spouse.</li>
+<li>993 people are widowed</li>
+<li>418 participant's spouse is absent.</li>
+</ul>
+
+###Analysis of variable "Occupation"
+
+```{r}
+
+
+ggplot(adult,aes(x = adult$occupation, fill = adult$occupation)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Occupation",  y = "",fill = "Occupation") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1, angle=90)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Occupation")
+
+```
+<ul style="list-style-type:disc;"><li>
+The above graph  indicates that a person who has  speciality in particular profession is more in number.There is large number of people even from "craft repair" which does not require much education. Population is evenly distributed among different occupation.</li>
+</ul>
+```{r}
+table(adult$occupation)
+```
+<ul style="list-style-type:disc;">
+<li>Maximum people have professional speciality that is 5983.</li>
+<li>Participants of occupation "Admin support including clerical" is 3770</li>
+<li>Participants of occupation Executive admin and managerial 4066</li>
+<li>Participants who are in Other services are 3295</li>
+<li>Participants indulged in Sales are 3650</li>
+<li>Participants of occupation "Precision production craft & repair" is 4099</li>
+
+</ul>
+
+###Analysis of variable "Relationship"
+
+```{r}
+ggplot(adult,aes(x = adult$relationship, fill = adult$relationship)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Relationship",  y = "",fill = "Relationship") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1, angle=90)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Relationship")
+
+```
+<ul style="list-style-type:disc;"><li>
+Above graph shows that  maximum participants are husbands which is reasonable  as male's working percentage is higher and usually male member has the responsibility.</li></ul>
+
+```{r}
+table(adult$relationship)
+```
+<ul style="list-style-type:disc;">
+<li>Majority of people are husbands that is 13193 as they are male and have responsibility of family.</li>
+<li>8305 people dont have a family which is second highest.</li>
+<li>Participants who are wives are 1568.</li>
+<li>3446 people are unmarried.</li>
+<li>5068 are own-child.(Basically these are the people who are single,they maybe married or not.)</li>
+<li>981 people are the "other relatives" of other people.</li>
+</ul>
+
+###Analysis of variable "Race"
+
+```{r}
+ggplot(adult,aes(x = adult$race, fill = adult$race)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Race",  y = "",fill = "Race") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Race")
+
+```
+<ul style="list-style-type:disc;"><li>
+The major part of individuals belong to the category "White", followed by the category "Black" . As we can see from the graph above, 85.4% of the participants in the study are "White" because Americans are usually of white race.</li></ul>
+
+```{r}
+table(adult$race)
+```
+
+<ul style="list-style-type:disc;"><li>
+27816 people out of 32561 are of white race which claerly indicated maximum people are from US and of white race.
+</li>
+<li>3124 people are black which is second highest in number.</li></ul>
+
+###Analysis of variable "Sex"
+```{r}
+ggplot(adult,aes(x = adult$sex, fill = adult$sex)) +geom_bar(aes(y = (..count..)/sum(..count..))) +
+  geom_text(aes(label = scales::percent((..count..)/sum(..count..)),y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=4) +labs(x = "Gender",  y = "",fill = "Gender") +theme(legend.position = 'none',axis.text.x = element_text( hjust = 1)) + scale_y_continuous(labels = percent)+ggtitle("Bar Plot of Gender")
+```
+<ul style="list-style-type:disc;"><li>
+66.9% of people are male which is quite reasonable because in reality working male percentage is higher than female. </li>
+</ul>
+
+```{r}
+table(adult$sex)
+```
+<ul style="list-style-type:disc;"><li>
+It is clearly visible mostly working people are male that is 21790 whereas women don't work much as they are only 10771 in number.</li></ul>
+
+###Analysis of variable "capital_gain"
+```{r}
+
+ggplot(adult, mapping = aes(x = capitalgain)) + geom_histogram(binwidth = 4000,color = "black",fill = "lightgreen", alpha = 0.8)  +ggtitle("Histogram of Capital_Gain")
+```
+<ul style="list-style-type:disc;"><li>
+Capital gain of most people is zero means they do not get extra profit by selling assets.Very few people make large profit by selling assets.</li></ul>
+
+
+###Analysis of variable "capital_loss"
+```{r}
+
+ggplot(adult, mapping = aes(x = capitalloss)) + geom_histogram(binwidth = 1000,color = "black",fill = "lightblue", alpha = 0.8)  +ggtitle("Histogram of Capital_loss ")
+```
+<ul style="list-style-type:disc;"><li>
+Capital loss of most people is zero means they don't have extra loss by selling assets.Very few people had extra loss by selling assets.</li>
+</ul>
+
+
+###Analysis of variable "hours_per_week"
+```{r}
+
+ggplot(adult, mapping = aes(x = hoursperweek)) + geom_histogram(binwidth = 15,color = "black",fill = "lightpink", alpha = 0.8)  +ggtitle("Histogram of Hours_per_week ")
+```
+<ul style="list-style-type:disc;">
+<li>
+Most of the people works for 40hours a week which is in accordance with reality as people work for 8 hours in 5 days a week.Also there are people who work for very few hours but still earn and there are people who work for more than 50 hours as well.  </li></ul>
+
+```{r}
+summary(adult$hoursperweek)
+```
+<ul style="list-style-type:disc;"><li>On an average peopele work for 40.44 hours per week.
+</li>
+<li>Minimum working hour per week is 1. </li>
+<li> Maximum working per week is 99 hours.</li>
+<li>25% of people work for 40 hours as the first quadrant and median are same.</li>
+<li> 75% of the population works for 45 hours or less.</li>
+
+</ul>
+###Analysis of variable Native country
+```{r}
+ggplot(adult,aes(x = adult$nativecountry, fill = adult$nativecountry)) +geom_bar(aes(y=(..count..)/sum(..count..))) + geom_text(aes(label = scales::percent((..count..)/sum(..count..)), y = (..count..)/sum(..count..) ), stat = "count", vjust = -.1,size=3,angle=90) +labs(x = "Region", y = "",fill = "Regions") +theme(legend.position = 'none',axis.text.x = element_text(angle = 90, hjust = 1)) +  scale_y_continuous(labels = percent)
+```
+<ul style="list-style-type:disc;"><li>
+The majority of people come from the United States that is 91.4% which is likely to happen as this survey is conducted in US only.</li>
+</ul>
+```{r}
+table(adult$nativecountry)
+```
+<ul style="list-style-type:disc;"><li>Native country of maximum poeple is US.
+</li></ul>
+
+
+<h2 id="top13">Conclusion from Analysis of Univariate Distribution</h2>
+<ul style="list-style-type:disc;">
+<li>Majority of people earn less than 50k.</li>
+<li>Majority of population belongs to age group of 25 to 55 years.</li>
+<li> Majority of participants are married male whereas female are very less in number.</li>
+<li>Maximum participants are working in private job and are High school graduate.</li>
+<li>On an average people work for 40 hours in a week that is 8 hours in 5 days. </li>
+<li>Majority of population is of white race are from US.</li>
+<li>Very few people gained through capital gain or had loss due to capital loss.Thus capital gain and capital loss doesnot contribute much to the earning of majority of people.
+
+</li></ul>
+###Correlation between numerical variable
+
+```{r}
+
+adult$salary <- as.numeric(adult$salary)-1  #Changing salary to 0, 1
+#Correlation plot
+var <- c(1, 3, 5, 11:13, 15)
+corrplot(cor(adult[,var]))
+cor(adult[,var])
+adult$salary <- factor(adult$salary, labels=c("<=50k", ">50k")) #Re-factoring salary
+
+```
+<ul style="list-style-type:disc;">
+<li>We can see that the numerical variables do not seem to be strongly correlated with each other.  We see that the final weight variable does not appear to have an association with the response either.So we will not consider final weight.</li>
+<li>There is low positive correlation between age and salary means as age increases salary also increases.</li>
+<li>There is low positive correlation between education number and salary means as education number increases salary also increases  , if a person has studied for more years earns more.</li>
+<li>Capital gain and salary are slightly correlated as salary increases capital gain increases because people with more salary are likely to invest more.</li>
+<li>Capital loss and salary are slightly correlated as  salary increases capital loss may increases because people with more salary are likely to invest more so there maybe some chances of loss.</li>
+<li>There is low positive correlation between hours per week and salary means as hours per week increases salary also increases  , if a person works for more hours earns more.</li>
+
+</ul>
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+<h2 id="top9">Bivariate Distribution</h2>
+
+
+###Analysis of age and salary
+
+```{r}
+
+ggplot(data =adult, aes(age, fill = salary)) + 
+  geom_density(alpha = 0.2) +
+  scale_x_continuous(breaks = seq(0, 95, 5))
+```
+<ul style="list-style-type:disc;"><li>The above density plot shows us that during the  age of 20 to 35 years more people earn <50k whereas in the interval of 37 to 55 years more people earn >50k and then people earning >50k starts decreasing as they move towards the age of retirement.</li>
+</ul>
+
+
+```{r}
+
+ggplot(aes(x = salary, y = age),data = adult) +  geom_boxplot() + stat_summary(fun.y = mean, geom = "point",shape = 16,cex = 2,col = "blue") +coord_cartesian(ylim = c(10,90))+scale_y_continuous(breaks = seq(10, 90, 5)) + ylab("Age") +xlab("Salary") +ggtitle("Box Plot of Age by Salary")
+```
+<ul style="list-style-type:disc;"><li>Older people tends to earn more than younger people. We can see that people who earn more that 50K a year are on average about 42-43 years old, whereas people who earn less than 50K a year are younger, on average  around 34-37 years.This leads to the assumption that experience surely matters to earn more.Some people who earn greater than 50k belongs to the older age group that is above 72 years.Similary there are few people who are above 77 years of age earn less than equal to 50k per year.</li></ul>
+
+
+
+
+```{r}
+library(ggplot2)
+summary(subset(adult$age,adult$salary== "<=50k"))
+
+```
+
+```{r}
+summary(subset(adult$age,adult$salary== ">50k"))
+
+```
+<ul style="list-style-type:disc;"><li>From the above summary we notice that the first quartiles (25-th percentiles) for both groups differ significantly. The 25% of people who have an income of more than 50K is equal to 36, whereas the 25% of people earning less than 50K equals 25. This means that the older an individual is, the bigger their chances of having a higher income are because income increases with experience.</li>
+</ul>
+
+### t test
+<ul style="list-style-type:disc;">
+<li>Alternative Hypothesis- The average age of people is different in the >50K and <50K samples</li>
+<li>Null Hypothesis- The average age of people is same in both >50K and <50K samples
+</li></ul>
+```{r}
+gr <- subset(adult$age,adult$salary== ">50k")
+les <- subset(adult$age,adult$salary=="<=50k")
+t.test(gr,les,paired=FALSE)
+```
+<ul style="list-style-type:disc;"><li>Conclusion-Alternative Hypothesis is true and we reject the null hypothesis means average age of people earning more than 50k is different from average age of people earning less than 50k.This shows different age group has different earnings means we will consider age as one of the features during training so it will help in prediction of salary.</li>
+</ul>
+
+
+
+###Analysis of Workclass and salary
+
+
+```{r}
+
+
+ggplot(adult, aes(x= Workclass,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3) +
+    labs(y = "Percent", fill="Workclass") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by workclass")
+```
+  
+<ul style="list-style-type:disc;"><li>From the barplot above, we can see that the percentage of individuals having an income of less than 50K is biggest for Private jobs that is 78.4% . The group with the second highest percentage of people earning less than 50K is that of category Self employed not incorporated. In the private sector only about 65.7% of the people earn more than 50K a year.People who don't work doesnot earns.These results demonstrate that there is a relationship between the variables "income" and "workclass".</li></ul>
+
+```{r}
+
+# Number of people from different "workclass" earning less than 50K and more than 50K:
+table(adult$Workclass,adult$salary)
+```
+
+
+
+###Test for Independence of Work class and salary.
+<ul style="list-style-type:disc;"><li>Null Hypothesis- Workclass and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Workclass and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$Workclass,adult$salary,correct = FALSE) 
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,workclass and salary  are dependent on eachother.So,we can use workclass as one of the feature in training for the prediction of salary. </li></ul>
+
+
+
+###Analysis of Education and salary
+
+```{r}
+
+
+
+ggplot(adult, aes(x=education,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3,angle=90) +
+    labs(y = "Percent", fill="Education") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by Education")
+
+```
+<ul style="list-style-type:disc;"><li>Small percentage of school going people earn less  equal to 50k whereas a  HS-graduate person or a bachelor is more likely to earn more than 50k per year.There are some exceptions like very few people who are studying in 10th or below it but they are still earning greater than 50k.</li></ul>
+```{r}
+
+# Number of people having different education earning less than 50K and more than 50K:
+table(adult$education,adult$salary)
+```
+
+
+
+
+###Test for Independence of Education and salary.
+<ul style="list-style-type:disc;">
+<li>Null Hypothesis- Education and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Education and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$education,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Education and salary  are dependent on eachother.So,we can use Education as one of the feature in training for the prediction of salary. </li></ul>
+
+
+
+
+###Analysis of education number and salary
+```{r}
+library(ggplot2)
+cdplot(x = adult$educationnum, y = adult$salary,xlab = "Education number", ylab = "Salary", main = "Conditionl Density Plot of Salary vs. Education Number")
+```
+
+<ul style="list-style-type:disc;"><li>The conditional density plot of Salary vs. Education number shows that both are correlated,as the education number of person increases his salary also increases.When a person becomes high school graduate there is increase in number of people earning >50k.When a person gets 12 years of education there is rapid increase in number of people earning >50k.</li></ul>
+
+###t-Test 
+
+###1)
+<ul style="list-style-type:disc;">
+<li>Alternate Hypothesis-Average years of education for people earning >50k is more than people who are earning <=50k.</li>
+<li>Null Hypothesis-Average years of education for people earning >50k is not more than people who are earning <=50k.</li></ul>
+```{r}
+gre <- subset(adult$educationnum,adult$salary== ">50k")
+less_ <- subset(adult$educationnum,adult$salary=="<=50k")
+t.test(gre,less_,paired=FALSE)
+```
+<ul style="list-style-type:disc;"><li>Conclusion-The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that average years of education for people earning >50k is not more than people who are earning <50k.If a person studies for more number of years is more likely to earn >50k.
+</li></ul>
+
+###2)
+
+<ul style="list-style-type:disc;">
+<li>Alternate Hypothesis:The increase in number of people earning >50k after passing 10th is more as compared to increase in number of people earning >50k after passing 8th. </li>
+<li>Null Hypothesis:The increase in number of people earning >50k after passing 10th is not more as compared to increase in number of people earning >50k after passing 8th. </li></ul>
+
+```{r}
+edu <- select(adult,educationnum)
+edu <- filter(edu,educationnum >= 8 & educationnum <= 10 )
+edu1 <- select(adult,educationnum)
+edu1 <- filter(edu,educationnum >= 10 & educationnum <= 12 )
+t.test(edu,edu1,paired = FALSE)
+```
+
+<ul style="list-style-type:disc;"><li>Conclusion-The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis.We accept the alternate hypothesis that the increase in number of people earning >50k after passing 10th is more as compared to increase in number of people earning >50k after passing 8th.
+</li></ul>
+
+
+###3)
+
+<ul style="list-style-type:disc;">
+<li>Alternate Hypothesis:There is rapid increase in number of people earning >50k after passing 12th is more as compared to increase in number of people earning >50k after passing 10th. </li>
+<li>Null Hypothesis:The increase in number of people earning >50k after passing 12th is not more as compared to increase in number of people earning >50k after passing 10th. </li></ul>
+
+```{r}
+edu <- select(adult,educationnum)
+edu <- filter(edu,educationnum >= 10 & educationnum <= 12 )
+edu1 <- select(adult,educationnum)
+edu1 <- filter(edu,educationnum >= 12 & educationnum <= 14)
+t.test(edu,edu1)
+```
+
+<ul style="list-style-type:disc;"><li>Conclusion-The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis.We accept the alternate hypothesis that the increase in number of people earning >50k after passing 12th is more as compared to increase in number of people earning >50k after passing 10th.
+</li></ul>
+
+###Analysis of MaritalStatus and salary
+
+
+
+```{r}
+
+
+
+ggplot(adult, aes(x=maritalstatus,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3,angle=90) +
+    labs(y = "Percent", fill="Marital Status") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by Marital Status")
+```
+<ul style="list-style-type:disc;"><li>
+The Barplot of Salary grouped by marital status shows that a person who has never married is likely to earn less than 50k per year whereas a person who is married to a civilian spouse is likely to earn more than 50k per year.Very few participants are married to army force spouse and 0.1% of them earn  more than 50k per year as well as 0.1% earns <=50k.
+</li></ul>
+
+```{r}
+
+# Number of people having different marital status earning less than 50K and more than 50K:
+table(adult$maritalstatus,adult$salary)
+```
+
+###Test for Independence of MaritalStatus and salary.
+<ul style="list-style-type:disc;"><li>
+Null Hypothesis- MaritalStatus and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -MaritalStatus and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$maritalstatus,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,MaritalStatus and salary  are dependent on eachother.So,we can use MaritalStatus as one of the feature in training for the prediction of salary. </li></ul>
+
+
+
+###Analysis of Occupation and salary
+
+
+
+
+```{r}
+
+ggplot(adult, aes(x=occupation,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3.5,angle=90) +
+    labs(y = "Percent", fill="Occupation") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by Occupation")
+
+```
+<ul style="list-style-type:disc;"><li>A participant who has speciality in a particular profession or a person who is executive manager is likely to earn more than 50k per year .Maximum number of participants who are engaged in "Pro-speciality" earns <=50k due to their less age or less number of working hours.</li></ul>
+
+```{r}
+
+# Number of people in different occupation earning less than 50K and more than 50K:
+table(adult$occupation,adult$salary)
+```
+
+###Test for Independence of Occupation and salary.
+<ul style="list-style-type:disc;"><li>Null Hypothesis- Occupation and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Occupation and salary are dependent in the considered population.</li>
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+ chisq.test(adult$occupation,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Occupation and salary  are dependent on eachother.So,we can use Occupation as one of the feature in training for the prediction of salary. </li></ul>
+
+
+###Analysis of Relationship and salary
+
+
+
+```{r}
+
+ggplot(adult, aes(x=relationship,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3) +
+    labs(y = "Percent", fill="Relationship",x = "Relationship") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by Relationship")
+
+
+```
+<ul style="list-style-type:disc;"><li>A person who is not in a family is likely to earn to less than 50k year as maximum people earning less than 50k a year are high school graduate or they maybe separated.Ratio between husbands earning <=50k to husbands earning >50k is very less that is about 0.4% which shows majority of working people are males and are husbands as husbands have responsibility to earn.</li></ul>
+
+```{r}
+
+# Number of people having different relationship with others earning less than 50K and more than 50K:
+table(adult$relationship,adult$salary)
+```
+
+```{r}
+ggplot(data = adult, mapping = aes(x = adult$maritalstatus,fill=relationship)) + geom_bar()  +ggtitle("Barplot of Relationship grouped by marital status")+theme(axis.text.x = element_text( hjust = 1,angle=90))+labs(x="Marital Status",y="Relationship")
+```
+<ul style="list-style-type:disc;"><li>
+Relationship  is closely realted to the variable " marital status" and they should be considered together.  All the individuals of the category" Not-in-family" have a proper marital status, i.e. " Divorced"," Married-spouse-absent"," Never-married"," Separated" or " Widowed". The situation is similar with the categories" Husband" and " Wife", where there are no discrepancies between their marital and relationship status.Another interesting observation that can be made is that people with marital status" Never-married" recognized themselves as belonging to one of the four relationship categories - " Not-in-family"," Unmarried"," Other-relative" and " Own-child".
+</li></ul>
+
+
+
+
+###Test for Independence of Relationship and salary.
+<ul style="list-style-type:disc;"><li>Null Hypothesis- Relationship and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Relationship and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$relationship,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Relationship and salary  are dependent on eachother.So,we can use Relationship as one of the feature in training for the prediction of salary.</li></ul> 
+
+###Analysis of Race and salary
+
+
+
+```{r}
+
+
+
+ggplot(adult, aes(x=race,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3.4,angle=90) +
+    labs(y = "Percent", fill="Racep",x = "Race") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by Race")
+```
+<ul style="list-style-type:disc;"><li>The ratio between white and black people earning less than 50k is about 8% whereas this ratio grows to 18% for people earning greater than 50k per year.This  difference in ratio shows more white people earn >50k.</li></ul>
+```{r}
+# Number of people from different "race" earning less than 50K and more than 50K:
+table(adult$race,adult$salary)
+```
+
+
+###Test for Independence of Race and salary.
+<ul style="list-style-type:disc;"><li>Null Hypothesis- Race and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Race and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$race,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Race and salary  are dependent on eachother.So,we can use Race as one of the feature in training for the prediction of salary. </li></ul>
+
+
+
+###Analysis of sex and salary
+
+
+
+```{r}
+
+ggplot(adult, aes(x=sex,  group=salary)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5,size=3.5) +
+    labs(y = "Percent", fill="gender",x = "gender") +
+    facet_grid(~salary) +
+    scale_y_continuous(labels = scales::percent)+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))+ggtitle("Bar Plot of Salary grouped by gender")
+```
+<ul style="list-style-type:disc;"><li>
+The ratio of male to female who are earning less than 50k is just 1.5 whereas this ratio grows 5.6 for male to female earning greater than 50k.Females earning >50k is very less due to less years of education or less working hours than men.</li></ul>
+
+```{r}
+# Number of men and women earning less than 50K and more than 50K:
+table(adult$sex,adult$salary)
+```
+
+###Plot of Gender and education number
+
+```{r}
+ggplot(data = adult, mapping = aes(x = educationnum)) + geom_histogram(binwidth = 5,color = "black",fill = "lightblue",alpha = 0.6) +scale_x_continuous(breaks = seq(0, 95, 5)) +  facet_wrap(~sex) +ggtitle("Histogram of Education number by Gender") 
+```
+<ul style="list-style-type:disc;"><li>Above plot shows that average years of education of majority of females is very less than males,thus majority of females are earning less than 50k.Most of the males are educated so working population of male is also more.</li></ul>
+
+
+
+###Test for Independence of Gender and salary.
+<ul style="list-style-type:disc;"><li>Null Hypothesis- Gender and salary are independent in the considered population.</li>
+<li>Alternate Hypothesis -Gender and salary are dependent in the considered population.</li></ul>
+```{r}
+chisq.test(adult$sex,adult$salary,correct = FALSE)
+```
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Gender and salary  are dependent on eachother.So,we can use Gender as one of the feature in training for the prediction of salary. </li></ul>
+
+
+###Analysis of Capital Gain and salary
+
+```{r}
+
+ggplot(adult,aes(x=capitalgain,fill=salary))+geom_histogram(position="dodge",binwidth = 6000)+scale_y_continuous(breaks = seq(0, 30000, 2000))+ggtitle("Salary grouped by capital gain")+facet_wrap(~salary)
+```
+<ul style="list-style-type:disc;"><li>
+Capital gain have very few unique values, although majority of their instances have zero values. This implies that very few people had capital gain whether they earn >50k or less than 50k,that shows capital gain doesnot have significant affect on distribution of salary. </li></ul>
+
+
+
+
+
+###Analysis of Capital loss and salary
+
+```{r}
+
+ggplot(adult,aes(x=capitalloss,fill=salary))+geom_histogram(binwidth = 500,position="dodge")+scale_y_continuous(breaks = seq(0, 30000, 2000))+
+scale_x_continuous(breaks = seq(0, 3000, 500))+ggtitle("Salary grouped by capitalloss")
+```
+<ul style="list-style-type:disc;"><li>Capital loss also have very few unique values, although majority of their instances have zero values. This implies that very few people had capital loss whether they earn >50k or less than 50k,that shows capital loss doesnot have significant affect on distribution of salary.
+</li></ul>
+
+
+###Analysis of Hours per week and salary
+```{r}
+ggplot(aes(x = salary, y = hoursperweek),data = adult) +geom_boxplot() +stat_summary(fun.y = mean,geom = "point", shape = 19,color = "red",cex = 2) +coord_cartesian(ylim = c(20, 80)) +scale_x_discrete(breaks = NULL) +scale_y_continuous(breaks = seq(20,80, 5)) + ylab("Hours per Week") +xlab("Salary") +  facet_wrap(.~salary)+ggtitle("Box plot of Salary grouped by Hours per Week") 
+```
+<ul style="list-style-type:disc;"><li>People who earn less than 50k a year works for 40 hours on an average in a week whereas average working hours of people earning >50k is 45.Thus we can say people who work for more number of hours in a week earns more than 50k whereas people who work for less hours in a week earns less than 50k per year.Ususally people who are studying or who are of older age or women works for less hours in a week thus they earn less than 50k.</li>
+
+<li>Even there are people who are working for more 50 hours to about 80 hours but still earns <=50k whereas there are people who works for <27 hours a week but still earn <=50k.</li>
+<li>There are people who have to work for more than 65 hours to earn >50k per year.</li>
+<li>Some people works for less than 27 hours but still earns >50k a year which shows the impact of more education and experience.</li>
+</ul>
+
+
+###Analysis of hours per week and gender
+
+```{r}
+ggplot(data = adult, mapping = aes(x = hoursperweek)) + geom_histogram(binwidth = 5,color = "black",fill = "blue",alpha = 0.6) +scale_x_continuous(breaks = seq(0, 95, 5)) +  facet_wrap(~sex) +ggtitle("Histogram of gender grouped by hours per week")+theme(legend.position = 'none',axis.text.x = element_text( hjust = 1,angle=90))
+
+```
+<ul style="list-style-type:disc;"><li>
+Average working hours per week for majority of female is very less compared to average working hours of males thus number of female who are earning more is very less as compared to male.Hence,male earns more. </li>
+<li>Even there are males and females who works for less than average working hours but still earns.</li>
+<li>Number of males who are working for more than average working hours(40 hours) are more as compared to females.</li>
+</ul>
+
+
+
+###Analysis of Native country and salary
+
+
+
+###Test for Independence of Native country and salary.
+<ul style="list-style-type:disc;">
+<li>Null Hypothesis- Native country and salary are independent in the considered population.</li>
+<li> Hypothesis -Native country and salary are dependent in the considered population.</li>
+</ul>
+```{r}
+chisq.test(adult$nativecountry,adult$salary,correct = FALSE)
+```
+
+<ul style="list-style-type:disc;"><li>The p-value is less than 0.05, which means that at the 0.05 significance level we fail to accept the null hypothesis that the two categorical variables are independent.Hence ,Native country and salary  are dependent on eachother.So,we can use Native country as one of the feature in training for the prediction of salary. </li></ul>
+
+```{r}
+#Number of people earning less than 50k and more than 50k from different native region.
+table(adult$nativecountry,adult$salary)
+```
+
+<h2 id="top14">Conclusion from Analysis of Bivariate Distribution</h2>
+
+
+<ul style="list-style-type:disc;">
+<li>Salary of people depends on age.People earning <50k are of age group 20 to 37 years whereas people who earn >50k are of age group 37 to 55 years.</li>
+<li>Salary of people depends on workclass,education,marital status,occupation,gender,race,nativecountry as proved by chi-square test.</li>
+<li>People who earn more works for more than 45  hours. </li>
+<li>Male works for more hours than female.</li>
+<li>Capital gain and Capital loss doesnot have significant affect on salary.</li>
+<li>Majority of people who earn greater than 50k are married males.</li>
+<li>Salary increases with education and experience.</li>
+</ul>
+
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+
+<h2 id="top10">Multivariate Distribution</h2>
+
+
+```{r}
+
+ggplot(aes(x = age, y = hoursperweek),data = adult) + geom_line(mapping = aes(color = salary),stat = 'summary', fun.y = mean) + geom_smooth(mapping = aes(color = salary)) +scale_x_continuous(breaks = seq(10, 100, 5)) + scale_y_continuous(breaks = seq(0, 55, 5)) +  
+  labs(x = "Age", y = "Mean Hours per Week") +
+  ggtitle("Age vs. Mean Hours per Week by salary")
+```
+
+<ul style="list-style-type:disc;"><li>From this graph we see till the age of 55 years if a person works for more than 45 hours in a week he is likely to earn >50k ,after the age of 55 years there is decrease in working hours, but they are still earning >50k till the age of 77.After the age of 77 again there is increase in working hours of people as they are earning >50k.People who has salary >50k always work for more hours per week than the people earning <=50k in the same age.
+</li><ul>
+
+```{r}
+b1<-select(adult,hoursperweek,age,salary)
+ b1<- group_by(b1,salary)
+ b1<- summarise(b1,average_hours= mean(hoursperweek,rm.na=TRUE),average_age=       mean(age,rm.na=TRUE))
+ b2<- select(b1,everything())
+ b2
+```
+<ul style="list-style-type:disc;">
+<li>Average working hours of people earning less than 50k is less that is 38.8 hours whereas people earning >50 works for more hours that is 45.4 hours in a week.</li>
+<li>Average age of people earning less than 50k is less that is 36.7 years whereas people who earn >50k are older that is average age is 44.2 years.</li>
+<li>People who earns more works for more hours and are older than the people who earns less. </li>
+</ul>
+
+
+
+```{r}
+ggplot(aes(x = age, y = educationnum),data = adult) + geom_line(mapping = aes(color = salary),stat = 'summary', fun.y = mean) + geom_smooth(mapping = aes(color = salary)) +scale_x_continuous(breaks = seq(10, 100, 5)) + scale_y_continuous(breaks = seq(0, 55, 5)) +  
+  labs(x = "Age", y = "Education number") +
+  ggtitle("Age vs. Education number by salary")
+
+```
+
+<ul style="list-style-type:disc;"><li>For the age group of 25 to 85 years more educated people earn more than 50k than the people who are less educated in the same age group. </li>
+<li>In the age group of 20-27 years,education number increases rapidly thus people earning >50k also increases after that there is not much increase in education number thus people earning >50k are also not increasing.  </li>
+<li>After the age of 85 years as experience increases people earning >50k also increases.</li>
+<li>Around the age of 60 years which is the age of retirement people earning >50k and <=50k decreases.</li>
+
+</ul>
+```{r}
+h1<-select(adult,educationnum,age,salary)
+ h1<- group_by(h1,salary)
+ h1<- summarise(h1,average_educationyears= mean(educationnum,rm.na=TRUE),average_age=       mean(age,rm.na=TRUE))
+ h2<- select(h1,everything())
+ h2
+```
+<ul style="list-style-type:disc;"><li>It is clearly visible from the table that people who earns <50k are educated  less that is 9.5 years on an average.</li>
+<li>People who earn >50k per year are educated  more that is 11.6 years on an average.</li>
+<li>Average is 36.7 years for people earning <=50k.</li>
+<li>Average age of people earning >50k is more that is 44.2 years.</li>
+<li>People who earn >50k are older and more educated than people who earn <50k.</li>
+</ul>
+```{r}
+ggplot(aes(x = educationnum, y = hoursperweek),data = adult) + geom_line(mapping = aes(color = salary),stat = 'summary', fun.y = mean) + geom_smooth(mapping = aes(color = salary)) +scale_x_continuous(breaks = seq(10, 100, 5)) + scale_y_continuous(breaks = seq(0, 55, 5)) +  
+  labs(x = "Education number", y = "Mean Hours per Week") +
+  ggtitle("Education number vs. Mean Hours per Week by salary")
+```
+
+
+<ul style="list-style-type:disc;"><li>
+From the above graph we can see that people who earn >50k works for 43 hours or more than that whereas people who earn less than 50k works for less 40 hours.
+</li>
+<li>For people earning >50k, as education number goes beyond 12 years working hour increases. </li>
+<li>For people earninf <= 50k,if education is less than 10 years their working hour is less than 40 hours,as education number increases beyond 12 years their working hours also increases. </li>
+</ul>
+
+```{r}
+a1<-select(adult,educationnum,hoursperweek,salary)
+ a1<- group_by(a1,salary)
+ a1<- summarise(a1,average_educationyears= mean(educationnum,rm.na=TRUE),average_working_hours=       mean(hoursperweek,rm.na=TRUE))
+ a2<- select(a1,everything())
+ a2
+```
+<ul style="list-style-type:disc;">
+<li>It is clearly visible from the table that people who earns <50k are educated  less that is 9.5 years on an average.</li>
+<li>People who earn >50k per year are educated  more that is 11.6 years on an average.</li>
+<li>Average age of people earning less than 50k is less that is 36.7 years whereas people who earn >50k are older that is average age is 44.2 years.</li>
+<li>People who earns >50k are more educated and works for more hours than people who earns <50k.</li>
+
+```{r}
+qplot(x=adult$salary, data = adult, fill = relationship) + facet_grid (. ~ race)+labs(x="Salary")+ggtitle("Plot for race, relationship and income")
+```
+<ul style="list-style-type:disc;"><li>People who are earning less than 50k majority of them are white male married workers closely followed by the blacks and the Asia-Pacific islanders whereas people who are earning >50k are also white male married but are very less in number .
+           
+</li></ul>
+
+```{r}
+table(adult$salary,adult$relationship,adult$race)
+```
+<ul style="list-style-type:disc;"><li>Maximum people who earn <=50k are white married male followed by a person who doesnot have a family.
+</li></ul>
+
+<h2 id="top15">Conclusion Multivariate Distribution</h2>
+
+<ul style="list-style-type:disc;"><li>
+In this study of predicting a person's income based on different variables like age,gender,marital status etc. We found in exploring this particular dataset that,the sample is unevenly distributed. All of the  Pearson's chi-square tests give very small p-values, which means that it is very likely for the considered categorical variables - "education", "marital_status", "relationship", "native_country" and "hours_per_week"  to be related with "salary". T-Test of "age" also proves that "salary " dependent on age.</li>
+<li>People who work for more hours in a week as compared to people working for less hours in same age group earns more. </li>
+<li>For the age group of 25 to 85 years more educated people earn more than 50k than the people who are less educated in the same age group.
+</li>
+<li>People who work for more than 43 hours are likely to earn >50k .On the other hand people who work for less than 40hours earns <50k.</li>
+<li>Maximum working class people are married male of white race and belongs to age group of 25 to 55 years.</li>
+</ul>
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+<h1 id="top1"><u>Predictive Modeling</u></h1>
+
+<b> Problem Statement </b>
+
+<i>"Given various features, the aim is to build a predictive model to determine the income level for people in US. The income levels are binned at below 50K and above 50K."</i>
+
+
+
+
+From the problem statement, it's evident that this is a binary classification problem.
+
+
+Making predictions on this data should give us maximum possible accuracy. However, while working on imbalanced problems, accuracy is considered to be a poor evaluation metrics because:
+
+
+
+<ol type="1">
+<li>Accuracy is calculated by ratio of correct classifications / total classifications.</li>
+<li>This metric would largely tell us how accurate our predictions are on the majority class (since it comprises 94% of values). But, we need to know if we are predicting minority class correctly. </li></ol>
+
+
+
+
+In quest of better accuracy, we'll use various techniques used on imbalanced classification. For binary classification problem we can apply different machine learning algorithms:
+
+<ol type="1">
+<li><a href="#top2">Logistic Regression Model</a></li>
+<li><a href="#top3">Decision Tree Model</a></li>
+<li><a href="#top4">Random Forest Model</a></li>
+
+</ol>
+
+
+
+
+
+
+###Now let's apply various algorithm to build the model and test their predictive power.
+
+
+<h1 id="top2">Logistic Regression Model</h1>
+
+
+
+
+####Correlation between numerical variable
+
+```{r}
+library(corrplot)
+adult$salary <- as.numeric(adult$salary)-1  #Changing salary to 0, 1
+#Correlation plot
+var <- c(1, 3, 5, 11:13, 15)
+corrplot(cor(adult[,var]))
+adult$salary <- factor(adult$salary, labels=c(" <=50K", " >50K")) #Re-factoring salary
+
+```
+
+From the above correlation plot we can see that finalweight has no relation with output variable salary so we will not consider finalweight in prediction.But first of all let's check whether accuracy is affected by inclusion of final weight or not.
+
+###Scaling the numerical variables
+
+Feature scaling is a method used to standardize the range of independent variables or features of data. In data processing, it is also known as data normalization and is generally performed during the data preprocessing step.
+
+
+
+```{r}
+adult$age <- scale(adult$age)
+adult$fnlwgt <- scale(adult$fnlwgt)
+adult$educationnum <- scale(adult$educationnum)
+adult$capitalgain <- scale(adult$capitalgain)
+adult$capitalloss <- scale(adult$capitalloss)
+adult$hoursperweek <- scale(adult$hoursperweek)
+```
+
+
+
+
+
+###Creating the train and test dataset
+
+We now divide the data into 70% training set and 30% testing set. 
+
+```{r}
+library(caTools)
+split  <- sample.split(adult$salary,SplitRatio = 0.7)
+train <- subset(adult,split == TRUE  )
+test <- subset(adult,split==FALSE)
+nrow(train)
+nrow(test)
+
+```
+
+
+
+###Logistic regression with all variables.
+
+The R function that we use to build the logistic regression model is "glm" from the standard R installation (the "stats" package). Since we want to fit a logistic regression model, in "glm" we set "family" to "binomial".
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+model1 <- glm(salary~.,data = train,family= "binomial")
+summary(model1)
+
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm(). </li> 
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit.</li> 
+
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean).</li> 
+
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.</li> 
+
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.</li> 
+
+<li>"Number of Fisher Scoring iterations" tells "how many iterations this algorithm run before it stopped".</li> 
+</ul>
+
+###Predictions-Apply model to the train set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(caret)
+result1 <- predict(model1,train,type="response")
+p <- as.factor(ifelse(result1>0.5," >50K"," <=50K"))
+
+
+#Confusion Matrix
+confusionMatrix(p, train$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>The classifier returns the accuracy (correct classifications / total classifications) when the model includes significant predictors in it.</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2
+</li></ul>
+
+
+###Predictions-Apply model to the test set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(caret)
+result1 <- predict(model1,test,type="response")
+p <- as.factor(ifelse(result1>0.5," >50K"," <=50K"))
+
+
+#Confusion Matrix
+confusionMatrix(p, test$salary)
+
+```
+<ul style="list-style-type:disc;"><li>
+The classifier returns the accuracy (correct classifications / total classifications) when the model includes all predictors in it.</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.
+Balanced Accuracy=(sensitivity+specificity)/2</li>
+
+</ul>
+
+
+
+
+
+
+
+Let us see, if the model accuracy increases or decreases with the exclusion of final weight variable. 
+
+###Logistic regression after dropping final weight variable.
+
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+model2 <- glm(train$salary~age+Workclass+education+educationnum+maritalstatus+occupation+relationship+sex+capitalgain+capitalloss+hoursperweek+nativecountry,data = train,family= "binomial")
+summary(model2)
+
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm().  </li>
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit.</li>
+
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean).</li>
+
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.</li>
+
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.</li>
+
+<li>"Number of Fisher Scoring iterations" tells "how many iterations this algorithm run before it stopped".</li>
+</ul>
+
+###Predictions-Apply model to the train set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(caret)
+r1 <- predict(model2,train,type="response")
+p <- as.factor(ifelse(r1>0.5," >50K"," <=50K"))
+
+
+#Confusion Matrix
+confusionMatrix(p, train$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>The classifier returns the accuracy (correct classifications / total classifications) when the model includes significant predictors in it.</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2
+</li></ul>
+
+
+###Predictions-Apply model to the test set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+result2 <- predict(model2,test,type = "response")
+#Confusion Matrix
+p1 <- as.factor(ifelse(result2>0.5," >50K"," <=50K"))
+confusionMatrix(p1, test$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+
+There is no significant decrease or increase in accuracy when we drop the final weight feature in the model2.</li>
+
+<li>The classifier returns the accuracy (correct classifications / total classifications) when the model includes all predictors in it(except finalweight).</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.
+Balanced Accuracy=(sensitivity+specificity)/2</li>
+</ul>
+
+
+
+
+
+
+
+
+
+Let us see, if the model accuracy increases with the inclusion of significant predictors only.
+
+###Logistic regression with significant independent variables
+
+```{r}
+
+model3 <- glm(train$salary~age + education + hoursperweek + Workclass + maritalstatus + occupation + relationship + race + sex,data = train,family= "binomial")
+summary(model3)
+
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm().  </li>
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit. </li>.
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean). </li>
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.  </li>
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.  </li>
+
+<li>"Number of Fisher Scoring iterations" tells "how many iterations this algorithm run before it stopped".  </li></ul>
+
+###Predictions-Apply model to the train set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(caret)
+r2 <- predict(model3,train,type="response")
+p <- as.factor(ifelse(r2>0.5," >50K"," <=50K"))
+
+
+#Confusion Matrix
+confusionMatrix(p, train$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>The classifier returns the accuracy (correct classifications / total classifications) when the model includes significant predictors in it.</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2
+</li></ul>
+
+###Predictions-Apply model to the test set
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+result3 <- predict(model3,test,type = "response")
+#Confusion Matrix
+p2 <- as.factor(ifelse(result3>0.5," >50K"," <=50K"))
+confusionMatrix(p2, test$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>The classifier returns the accuracy (correct classifications / total classifications) when the model includes significant predictors in it.</li>
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+
+
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2
+</li></ul>
+
+
+
+With the inclusion of significant predictors in the model, the classifier accuracy decreases slightly.
+
+
+###ROC Curve
+
+
+Often, choosing the best model is sort of a balance between predicting the >50k accurately or <=50k accurately. In other words sensitivity and specificity.
+
+But it would be great to have something that captures both these aspects in one single metric.
+
+This is nicely captured by the 'Receiver Operating Characteristics' curve, also called as the ROC curve.
+
+
+```{r}
+library(ROCR)
+ROCRPred <- prediction(result1,test$salary)
+ROCRPref <- performance(ROCRPred,"tpr","fpr")
+
+#plot
+plot(ROCRPref,colorize=TRUE,print.cutoffs.at=seq(0.1,by=0.1))
+
+```
+
+
+Ideally, if you have a perfect model, all the events will have a probability score of 1 and all non-events will have a score of 0. For such a model, the area under the ROC will be a perfect 1.
+
+
+If we trace the curve from bottom left, the value of probability cutoff decreases from 1 towards 0. A good model, more of the real events should be predicted as events, resulting in high sensitivity. In that case, the curve will rise steeply covering a large area before reaching the top-right.
+
+Therefore, the larger the area under the ROC curve, the better is your model.So we are choosing a cutoff of 0.3 because at 0.3 and after that the line covers majority of the area under the curve.
+
+###Changing the threshold to 0.3 and predicting on train data
+
+```{r }
+res1 <- predict(model1,train,type = "response")
+#Confusion Matrix
+p3 <- as.factor(ifelse(res1>0.3," >50K"," <=50K"))
+confusionMatrix(p3, train$salary)
+```
+
+###Changing the threshold to 0.3 and predicting on test data
+
+```{r }
+res1 <- predict(model1,test,type = "response")
+#Confusion Matrix
+p3 <- as.factor(ifelse(res1>0.3," >50K"," <=50K"))
+confusionMatrix(p3, test$salary)
+```
+
+After the changing the threshold to 0.3 by observing ROC curve the accuracy is almost same as the accuracy  when the classifier includes all the independent variable and threshold was 0.5.But there is a significant increase in balanced accuracy as well as specificity.
+
+
+
+
+###Oversampling to increase balanced accuracy
+
+```{r}
+table(train$salary)
+library(ROSE) #Randomly OverSampling examples
+over <-ovun.sample(salary~.,data=train,method="over",N=34608)$data
+table(over$salary)
+
+
+
+```
+
+By doing oversampling now both the classes has equal number of observations that is 17304 for <=50K and 17304 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class. By doing oversampling we increased the number of observations to 17304 in both classes which was number of observations in >50k class in train dataset.
+
+
+###Predictive Model
+
+```{r}
+lrover <- glm(salary~.,data = train,family= "binomial")
+lrover
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm().  </li>
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit. </li>.
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean). </li>
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.  </li>
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.  </li>
+
+</ul>
+
+
+###Predictive Model Evaluation with test data
+
+```{r}
+result3 <- predict(lrover,test,type = "response")
+#Confusion Matrix
+p2 <- as.factor(ifelse(result3>0.3," >50K"," <=50K"))
+confusionMatrix(p2, test$salary)
+
+
+```
+
+When we applied logistic regression model on oversampled data set and taking the threshold as 0.3 the accuracy(82%) ,balanced accuracy(81%),sensitivity(83%) and specificity(78%) are same almost same as of before when we donot performed oversampling and threshold was 0.3. 
+
+
+###Undersampling to increase balanced accuracy
+
+
+
+```{r}
+under <-ovun.sample(salary~.,data=train,method="under",N=10978)$data
+table(under$salary)
+
+```
+
+
+By doing undersampling now both the classes has equal number of observations that is 5489 for <=50K and 5489 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class.By doing undersampling we reduced the number of observations to 5489 in both classes which was number of observations in >50k class in train dataset.
+
+###Predictive Model
+
+
+```{r}
+
+lrunder <- glm(salary~.,data = train,family= "binomial")
+lrunder
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm().  </li>
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit. </li>.
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean). </li>
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.  </li>
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.  </li>
+
+</ul>
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+result3 <- predict(lrunder,test,type = "response")
+#Confusion Matrix
+p2 <- as.factor(ifelse(result3>0.3," >50K"," <=50K"))
+confusionMatrix(p2, test$salary)
+
+```
+
+
+When we applied logistic regression model on undersampled data set and taking the threshold as 0.3 the accuracy(82%) ,balanced accuracy(81%),sensitivity(83%) and specificity(78%) are same almost same as of before when we donot performed undersampling and threshold was 0.3.
+
+###Performing both over sampling and undersampling to increase balanced accuracy
+
+```{r}
+both <-ovun.sample(salary~.,data=train,method="both",seed=222,N=22793)$data
+table(both$salary)
+
+```
+
+We have created possibly balanced samples by random over-sampling minority(>50k) examples, under-sampling majority(<=50k) examples or combination of over- and under-sampling.
+
+###Predictive Model
+
+
+```{r}
+
+lrboth <- glm(salary~.,data = train,family= "binomial")
+lrboth 
+```
+
+<ul style="list-style-type:disc;"><li>
+The summary gives the beta coefficients, Standard error, z Value and p Value. Our model had categorical variables with multiple levels, you we will find a row-entry for each category of that variable. That is because, each individual category is considered as an independent binary variable by the glm().  </li>
+
+
+<li>Deviance is a measure of goodness of fit of a model. Higher numbers always indicates bad fit. </li>.
+<li>Null Deviance, Null deviance shows how well the response is predicted by a model with nothing but an intercept (grand mean). </li>
+<li>Residual deviance is lower than null deviance.Lower value of residual deviance points out that the model has become better.  </li>
+<li>AIC, Its full form is Akaike Information Criterion (AIC). This is useful when we have more than one model to compare the goodness of fit of the models.It is a maximum likelihood estimate which penalizes to prevent overfitting. It measures flexibility of the models. .Lower AIC of model is better than the model having higher AIC.  </li>
+
+</ul>
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+
+result3 <- predict(lrboth,test,type = "response")
+#Confusion Matrix
+p2 <- as.factor(ifelse(result3>0.3," >50K"," <=50K"))
+confusionMatrix(p2, test$salary)
+
+
+```
+
+When we applied logistic regression model on oversampled and undersampled data set and taking the threshold as 0.3 the accuracy(82%) ,balanced accuracy(81%),sensitivity(83%) and specificity(78%) are same almost same as of before when we donot performed oversampling and undersampling and threshold was 0.3.
+
+<b><h1>Logistic Regression Inference:</h1></b>
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+output <- 
+  matrix(paste(c("Logistic Regression(With all variables & threshold=0.5)","85%","~93%","59%","76%","Logistic Regression(w/o fnlwgt)","85%","~94%","~60%","~77%","Logistic Regression(significant variables)","83%","92%","55%","~74%","Logistic Regression(With all variables & threshold=0.3)","~84%","~84","~79%","81%","Logistic Regression(oversampling)","82%","~84%","~79%","81%","Logistic Regression(undersampling)","82%","~84","~79%","81%","Logistic Regression(over & under sampling)","82%","~84%","~79%","81%")), 
+         ncol=5, byrow = TRUE)
+library(htmlTable)
+htmlTable( output, header = paste(c("Models","Accuracy(Test Data)","Sensitivity","Specificity","Balanced Accuracy")), css.cell = rbind(rep("background: lightblue;", times=ncol(output)),matrix("", ncol=ncol(output), nrow=nrow(output))), col.rgroup = c("none", "light grey"))
+```
+
+<ul style="list-style-type:disc;"><li>The model gives higher accuracy on unseen data when it has all the predictors included and thershold is 0.5. The model's accuracy decreases when some of the predictors are removed.Thus,for better results we will include all the predictor variable in our model.</li>
+<li>AFter changing the threshold to 0.3 there is significant increase in balanced accuracy and specificity.</li>
+<li>Logistic Regression model after performing the over and under sampling gives the highest balanced accuracy of 81% and highest specificity of 79% which is required because there is class imbalance problem and we need correct predictions on both the classes.</li>
+</ul>
+
+
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+<h1 id="top3">Decision Tree Model</h1>
+
+
+###Building Decision Tree with all variables.
+
+```{r}
+library(rpart)
+library(rpart.plot)
+model1 <- rpart(salary ~ ., data=train)
+model1
+rpart.plot(model1,extra=106)
+```
+
+The above decision tree expains that-
+<ul style="list-style-type:disc;"><li>
+<li>At the top it is the overall probability of earning >50k.It shows proportion of people who earn >50k.24% earn >50k</li>
+<li>This node asks whether the relationship is Not in family,Other relative ,Own child or Unmarried.If yes,then we go down to root's left child node.54% people have relationship Not in family,Other relative ,Own child or Unmarried with a probability 7% for earning >50k.</li>
+<li>In second node we ask if capital gain is < 0.81.If yes, then chance of earning >50k is 5%.If no, then chance of earning >50k is 1%.</li>
+<li>If relationship is not one these Not in family,Other relative ,Own child or Unmarried then we go down to root's right child node.46% people donot have relationship Not in family,Other relative ,Own child or Unmarried with a probability 45% for earning >50k.</li>
+<li>In the second node we ask if education =10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-acdm, Assoc-voc, HS-grad, Preschool, Some-college.If yes ,then chance of earning <=50K is 72%.If no ,then 32% people have education=10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-acdm, Assoc-voc, HS-grad, Preschool, Some-college with probability of earning >50k is 33%.This node again asks if capital gain is <0.54.</li>	
+<li>If yes, then 31% people have capital gain <0.54 with probabilty of earning >50k as 30%.If no, then 2% have capital gain >0.54 with probability if earning <=50k as 98%.</li>
+
+</ul>
+
+###Prediction on train dataset
+
+```{r}
+library(caret)
+pred1 <- predict(model1,newdata=train,type="class")
+confusionMatrix(table(pred1,train$salary))
+```
+
+<ul style="list-style-type:disc;"><li>
+The accuracy (correct classifications / total classifications) of the model including all the predictor variables is about ~85% % whereas balanced accuracy is about 73% on train data.</li>
+
+<li>The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance).
+Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 95%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 51%.
+</li>
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.
+Balanced Accuracy=(sensitivity+specificity)/2
+</li>
+</ul>
+
+
+###Prediction on test dataset
+
+```{r}
+library(caret)
+pred2 <- predict(model1,newdata=test,type="class")
+confusionMatrix(table(pred2,test$salary))
+```
+
+<ul style="list-style-type:disc;"><li>
+The accuracy (correct classifications / total classifications) of the model including all the predictor variables is about 84 % whereas balanced accuracy is about 73% on test data.</li>
+
+<li>The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance).
+Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 95%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 51%.
+</li>
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.
+Balanced Accuracy=(sensitivity+specificity)/2
+</li>
+</ul>
+
+
+###Model 2 after taking significant variables only
+
+
+```{r}
+
+model2 <- rpart(salary ~ age + education + hoursperweek + Workclass + maritalstatus + occupation + relationship + race + sex, data=train)
+model2
+rpart.plot(model2,extra=106)
+
+```
+
+
+The above decision tree expains that-
+<ul style="list-style-type:disc;"><li>
+<li>At the top it is the overall probability of earning >50k.It shows proportion of people who earn >50k.24% earn >50k</li>
+<li>This node asks whether the relationship is Not in family,Other relative ,Own child or Unmarried.If yes,then we go down to root's left child node.55% people have relationship Not in family,Other relative ,Own child or Unmarried with a probability 7% for earning >50k.</li>
+<li>If relationship is not one these Not in family,Other relative ,Own child or Unmarried then we go down to root's right child node.45% people donot have relationship Not in family,Other relative ,Own child or Unmarried with a probability 45% for earning >50k.</li>
+<li>In the second node we ask if education =10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-acdm, Assoc-voc, HS-grad, Preschool, Some-college.If yes ,then chance of earning >50K is 34%.It again asks whether occupation= Armed-Forces, Craft-repair, Farming-fishing, Handlers-cleaners, Machine-op-inspct, Other-service, Priv-house-serv, Prof-specialty, Transport-moving .If yes then probability of earning >50k is 26%.If no,then it again asks whether age <-0.67.If yes,then probability of earning >50k is 20%.If no,then it asks if education=0th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, HS-grad,if yes then probability of earning >50k is 42% else probability of earning <=50k is 58%</li>
+<li>If no ,then 14% people have education=10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-acdm, Assoc-voc, HS-grad, Preschool, Some-college with probability of earning <=50k is 72%.</li>
+
+</ul>
+
+###Prediction on train dataset
+
+```{r}
+library(caret)
+pred3 <- predict(model2,newdata=train,type="class")
+confusionMatrix(table(pred3,train$salary))
+```
+
+<ul style="list-style-type:disc;"><li>The accuracy (correct classifications / total classifications) of the model including significant variables is about 83% whereas balanced accuracy is about 73% which is almost same as model including all the variables on train data.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is  about 92%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 53%.</li>
+</ul>
+
+###Prediction on test dataset
+
+```{r}
+pred4 <- predict(model2,newdata=test,type="class")
+confusionMatrix(table(pred4,test$salary))
+```
+
+
+<ul style="list-style-type:disc;"><li>The accuracy (correct classifications / total classifications) of the model having significant variables is about ~85% whereas balanced accuracy is about 72% which is same as model including all the variables in test data.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is  about 92%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 52%.</li>
+</ul>
+
+
+
+
+
+
+###Oversampling to increase balanced accuracy
+
+```{r}
+library(ROSE) #Randomly OverSampling examples
+over <-ovun.sample(salary~.,data=train,method="over",N=34608)$data
+table(over$salary)
+
+
+
+```
+
+By doing oversampling now both the classes has equal number of observations that is 17304 for <=50K and 17304 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class. By doing oversampling we increased the number of observations to 17304 in both classes which was number of observations in >50k class in train dataset.
+
+###Predictive Model
+
+```{r}
+dtover <- rpart(salary~.,data=over)
+dtover
+rpart.plot(dtover,extra=106)
+```
+
+The above decision tree expains that-
+<ul style="list-style-type:disc;"><li>At the top it is the overall probability of earning >50k.It show proportion of people who earn >50k.50% earn >50k.</li>
+<li>This node asks whether the relationship is Not in family,Other relative ,Own child or Unmarried.If yes,then we go down to root's left child node.41% people have relationship Not in family,Other relative ,Own child or Unmarried with a probability 19% for earning >50k.</li>
+<li>In second node we ask if capital gain is < 0.49.If yes, then chance of earning >50k is 14%.If no, then probability of earning <=50k is 93%. </li>
+<li>If relationship is not one these Not in family,Other relative ,Own child or Unmarried then we go down to root's right child node.59% people donot have relationship Not in family,Other relative ,Own child or Unmarried with a probability 72% for earning <=50k.</li>
+<li>In the second node we ask if educationnum <-0.23 .If no ,then chance of earning <=50K is 82%.If yes ,then 21% people have educationnum>-0.23 with probability of earning <=50k as 53%.This node again asks if capital gain is <0.54.If no,then 1% people have capital gain >0.54 with 99% probability of earning <=50k.	</li>
+<li>If yes, then 19% people have capital gain <0.54 with probabilty of earning >50k as 50%.It again asks whether education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool.If yes, then 4% have education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool with 26% of probability of earning >50k. </li>
+<li>If no,then 56% earns <=50K.It again asks whether age is <-0.37 or not.If yes,3% people have age <-0.37 and 35% of probability of earning >50k.If no,then 12 % people have age >-0.37 with 61% probabiltiy of earning <=50k.</li>
+</ul>
+
+
+###Predictive Model Evaluation with test data
+
+```{r}
+p2 <- predict(dtover,test,type="class")
+confusionMatrix(p2,test$salary) 
+
+
+
+```
+
+
+<ul style="list-style-type:disc;"><li>The accuracy (correct classifications / total classifications) of the model after oversampling of train data is about ~77% whereas balanced accuracy is about 80% .</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is  about ~74%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 86%.</li>
+<li>There is a significant increase in balanced accuracy and specificity whereas accuracy and sensitivity has decreased significantly compared to the model which was not oversampled.</li>
+</ul>
+
+
+###Undersampling to increase balanced accuracy
+
+
+
+```{r}
+under <-ovun.sample(salary~.,data=train,method="under",N=10978)$data
+table(under$salary)
+
+```
+
+By doing undersampling now both the classes has equal number of observations that is 5489 for <=50K and 5489 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class.By doing undersampling we reduced the number of observations to 5489 in both classes which was number of observations in >50k class in train dataset.
+
+###Predictive Model
+
+
+```{r}
+
+dtunder <- rpart(salary~.,data=under)
+dtunder
+rpart.plot(dtunder,extra=106)
+```
+
+The above decision tree expains that-
+<ul style="list-style-type:disc;"><li>At the top it is the overall probability of earning >50k.It show proportion of people who earn >50k.50% earn >50k.</li>
+<li>This node asks whether the relationship is Not in family,Other relative ,Own child or Unmarried.If yes,then we go down to root's left child node.41% people have relationship Not in family,Other relative ,Own child or Unmarried with a probability 18% for earning >50k.</li>
+<li>In second node we ask if capital gain is < 0.81.If yes, then chance of earning >50k is 14%.If no, then probability of earning <=50k is 98%. </li>
+<li>If relationship is not one these Not in family,Other relative ,Own child or Unmarried then we go down to root's right child node.59% people donot have relationship Not in family,Other relative ,Own child or Unmarried with a probability 72% for earning <=50k.</li>
+<li>In the second node we ask if education is  10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-voc, HS-grad, Preschool, Some-college .If no ,then chance of earning <=50K is 89%.If yes ,then 34% people have education = 10th, 11th, 12th, 1st-4th, 5th-6th, 7th-8th, 9th, Assoc-voc, HS-grad, Preschool, Some-college with probability of earning <=50k as 60%.This node again asks if capital gain is <0.54.If no,then 3% people have capital gain >0.54 with 99% probability of earning <=50k.	</li>
+<li>If yes, then 31% people have capital gain <0.54 with probabilty of earning <=50k as 56%.It again asks whether education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool.If yes, then 4% have education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool with 22% of probability of earning >50k. </li>
+<li>If no,then 61% earns <=50K.It again asks whether age is <-0.37 or not.If yes,6% people have age <-0.37 and 42% of probability of earning >50k.If no,then 12 % people have age >-0.37 with 66% probabiltiy of earning <=50k.</li>
+</ul>
+
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+p2 <- predict(dtunder,test,type="class")
+confusionMatrix(p2,test$salary) 
+
+```
+
+
+
+<ul style="list-style-type:disc;"><li>The accuracy (correct classifications / total classifications) of the model after undersampling of train data is about ~77% whereas balanced accuracy is about 80% .</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is  about ~74%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 86%.</li>
+<li>There is a significant increase in balanced accuracy and specificity whereas accuracy and sensitivity has decreased significantly compared to the model which was not undersampled.</li>
+</ul>
+
+
+
+###Performing both over sampling and undersampling to increase balanced accuracy
+
+```{r}
+both <-ovun.sample(salary~.,data=train,method="both",p=0.5,seed=222,N=22793)$data
+table(both$salary)
+
+```
+
+We have created possibly balanced samples by random over-sampling minority(>50k) examples, under-sampling majority(<=50k) examples or combination of over- and under-sampling.
+
+###Predictive Model
+
+
+```{r}
+
+dtboth <- rpart(salary~.,data=both)
+dtboth
+rpart.plot(dtboth,extra=106)
+```
+
+The above decision tree expains that-
+<ul style="list-style-type:disc;"><li>
+At the top it is the overall probability of earning >50k.It show proportion of people who earn >50k.50% earn >50k.
+<li>This node asks whether the relationship is Not in family,Other relative ,Own child or Unmarried.If yes,then we go down to root's left child node.41% people have relationship Not in family,Other relative ,Own child or Unmarried with a probability 18% for earning >50k.</li>
+<li>In second node we ask if capital gain is < 0.49.If yes, then chance of earning >50k is 14%.If no, then probability of earning <=50k is 93%. </li>
+<li>If relationship is not one these Not in family,Other relative ,Own child or Unmarried then we go down to root's right child node.59% people donot have relationship Not in family,Other relative ,Own child or Unmarried with a probability 72% for earning <=50k.</li>
+<li>In the second node we ask if educationnum <0.94 .If no ,then chance of earning <=50K is 89%.If yes ,then 37% people have educationnum>0.94 with probability of earning <=50k as 61%.This node again asks if capital gain is <0.54.If no,then 3% people have capital gain >0.54 with 99% probability of earning <=50k.	</li>
+<li>If yes, then 33% people have capital gain <0.54 with probabilty of earning >50k as 58%.It again asks whether education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool.If yes, then 5% have education=10th, 11th, 1st-4th, 5th-6th, 7th-8th, 9th, Preschool with 28% of probability of earning >50k. </li>
+<li>If no,then 62% earns <=50K.It again asks whether age is <-0.45 or not.If yes,5% people have age <-0.45 and 40% of probability of earning >50k.</li>
+<li>If no,then 24 % people have age >-0.45 with 67% probabiltiy of earning <=50k.This node again asks whether hours per week is <-0.48.</li>
+<li>If yes,then 2% people work for <-0.48 hours per week with 36% probability of earning >50k.If no,then 22% people work for hours per week >-0.48 with 69% probability of earning <=50k.</li>
+
+</ul>
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+
+p2 <- predict(dtboth,test,type="class")
+confusionMatrix(p2,test$salary) 
+
+
+```
+
+
+
+<ul style="list-style-type:disc;"><li>The accuracy (correct classifications / total classifications) of the model after oversampling and undersampling of train data is about ~78% whereas balanced accuracy is about 80% .</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is  about ~75%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about ~86%.</li>
+<li>There is a significant increase in balanced accuracy and specificity whereas accuracy and sensitivity has decreased significantly compared to the model which was not over and undersampled.</li>
+</ul>
+
+
+
+<h2Decision Tree Inference:</h2>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+output <- 
+  matrix(paste(c("Decision Tree(With all variables)","~85%","~95%","~51%","~73%","Decision Tree(significant variables)","~83%","92%","52%","72%","Decision Tree(oversampling)","~77%","~74","86%","~80%","Decision Tree(undersampling)","~77%","74%","86%","80%","Decision Tree(over & under sampling)","78%","75%","~86%","~81%")), 
+         ncol=5, byrow = TRUE)
+library(htmlTable)
+htmlTable( output, header = paste(c("Models","Accuracy(Test Data)","Sensitivity","Specificity","Balanced Accuracy")), css.cell = rbind(rep("background: lightblue;", times=ncol(output)),matrix("", ncol=ncol(output), nrow=nrow(output))), col.rgroup = c("none", "light grey"))
+```
+
+<ul style="list-style-type:disc;"><li>The balanced accuracy of decision tree model on which we performed over and undersampling is highest that is ~81% and specificity is also highest that is ~86%.</li>
+<li>Decision tree model on which we performed only undersampling also gave 86% specificity and 80% balanced accuracy.</li>
+<li>Although there is a drop in overall accuracy but we need high balanced accuracy as there is class imbalance problem so we need good predictions on both classes</li></ul>
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+<h1 id="top4">Random Forest classification model</h1>
+
+Here we fit a classification model with the random forest algorithm with the "randomForest" function from the "randomForest" package. We use the default parameters, like the number of variables for each split (which in this case is ???15999999???3) in the decision trees and the number of trees, which is 500. 
+
+
+###Random Forest Model including all the variables.
+
+
+```{r}
+library(randomForest)
+set.seed(123)
+rf <- randomForest(salary~.,data=train)
+rf
+
+```
+ 
+Here number of trees are 500 , OOB error is about 13% so the accuracy is 86-87%.
+
+As the forest is built on training data , each tree is tested on the 1/3rd of the samples not used in building that tree. This is the out of bag error estimate - an internal error estimate of a random forest as it is being constructed.
+Confusion Matrix also gives the error in predicting a particular class.
+
+
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p1 <- predict(rf,train)
+confusionMatrix(p1,train$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is 95-96% whereas balanced accuracy is about 92% for prediction on train data.</li>
+
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+<li>Here, Sensitivity is about 98% where as specificity is about 88%.</li>
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2</li>
+</ul>
+
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+p2 <- predict(rf,test)
+confusionMatrix(p2,test$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is 78% for prediction on test data.</li>
+
+
+<li>Kappa is similar to Accuracy score, but it takes into account the accuracy that would have happened anyway through random predictions.</li>
+
+<li>Kappa = (Observed Accuracy - Expected Accuracy) / (1 - Expected Accuracy)</li>
+
+<li>Sensitivity = True Positive Rate (TP/TP+FN) - It says, 'out of all the positive (majority class) values, how many have been predicted correctly'.</li>
+<li>Specificity = True Negative Rate (TN/TN +FP) - It says, 'out of all the negative (minority class) values, how many have been predicted correctly'.</li>
+<li>Here, Sensitivity is about 93% where as specificity is about 65%.</li>
+
+<li>Prevalence is a numeric value or matrix for the rate of the "positive" class of the data.</li>
+<li>Detection rate is the proportion of the whole sample where the events were detected correctly.</li>
+<li>Detection Prevalence tells What percentage of the full sample was predicted as <=50K.</li>
+<li>Balanced Accuracy is the  balance between correctly predicting the >50K and <=50k.</li>
+<li>Balanced Accuracy=(sensitivity+specificity)/2</li>
+</ul>
+
+
+
+
+###Random Forest Model including significant variables only.
+
+```{r}
+random1 <- randomForest(salary~age + education + hoursperweek + Workclass + maritalstatus + occupation + relationship + race + sex,data=train)
+random1
+```
+
+Here number of trees are 500 , OOB error is about 16% so the accuracy is 83-84%.
+
+
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p3 <- predict(random1,train)
+confusionMatrix(p3,train$salary)
+```
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 93% whereas balanced accuracy is also about 90% for prediction on train data.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 96%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 84%.
+</li></ul>
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+ p4 <- predict(random1,test)
+confusionMatrix(p4,test$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is also about 78% for prediction on test data when building the model using significant variables.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 94%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 63%.
+</li></ul>
+
+###Checking Accuracy for different number of trees.
+
+
+```{r}
+
+rf1 <- randomForest(salary~.,data=train,ntree=100)
+rf1
+```
+
+When we decrease the number of trees to 100 there is a slight increase in OOB error means decrease in accuracy of the model.
+ 
+ 
+```{r}
+rf1$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+ 
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p3 <- predict(rf1,train)
+confusionMatrix(p3,train$salary)
+```
+
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 96% whereas balanced accuracy is also about 93% for prediction on train data.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 98%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 88%.
+</li></ul>
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+ p4 <- predict(rf1,test)
+confusionMatrix(p4,test$salary)
+```
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is also about 78% for prediction on test data when number of tree is 100.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 93%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 64%.
+</li></ul>
+
+```{r}
+
+rf2 <- randomForest(salary~.,data=train,ntree=800)
+rf2
+```
+
+
+When we increase the number of trees to 800 OOB error is almost same when number of trees were 500 means no change in accuracy.
+ 
+  
+```{r}
+rf2$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+ 
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p5 <- predict(rf2,train)
+confusionMatrix(p5,train$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 96% whereas balanced accuracy is also about 93% for prediction on train data when number of tree is 800.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 98%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 88%.
+</li></ul>
+
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+p6 <- predict(rf2,test)
+confusionMatrix(p6,test$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is also about 79% for prediction on test data when number of tree is 800.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is 93%. Specificity that is the number of correct negative predictions divided by the total number of negatives is 64%.
+</li></ul>
+
+```{r}
+
+rf3 <- randomForest(salary~.,data=train,ntree=1500)
+rf3
+```
+
+When we increase the number of trees to 1500 OOB error is almost same when number of trees were 500 means no change in accuracy.
+
+ 
+```{r}
+rf3$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p7 <- predict(rf3,train)
+confusionMatrix(p7,train$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 96% whereas balanced accuracy is also about 93% for prediction on test data when number of tree is 1500.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 98%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 88%.
+</li></ul>
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+p8 <- predict(rf3,test)
+confusionMatrix(p8,test$salary)
+```
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is also about 78% for prediction on test data when number of tree is 1500.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is 94%. Specificity that is the number of correct negative predictions divided by the total number of negatives is 64%.
+</li></ul>
+
+
+###Cross Validation Method
+
+
+The k-fold cross validation method involves splitting the dataset into k-subsets. For each subset is held out while the model is trained on all other subsets. This process is completed until accuracy is determine for each instance in the dataset, and an overall accuracy estimate is provided.It is a robust method for estimating accuracy.
+Here we have taken k=3.
+
+
+ 
+```{r}
+model <- train(salary~.,data=train,method="rf",trControl = trainControl(method = "cv",number = 3))
+model
+```
+
+Accuracy  using 3-Fold Cross Validation approach for different value of mtry is given in the output above.We also tried cross validation for k=5 and 8 but k=3 gave the better results.
+
+ 
+```{r}
+model$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+
+###Prediction and ConfusionMatrix - train data
+
+```{r}
+library(caret)
+p9 <- predict(model,train)
+confusionMatrix(p9,train$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 99% whereas balanced accuracy is also about 99% for prediction on train data when we are predicting on random forest model using 3-fold cross validation.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 100%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 100%.
+</li></ul>
+
+###Prediction and ConfusionMatrix - test data
+
+```{r}
+p10 <- predict(model,test)
+confusionMatrix(p10,test$salary)
+```
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 86% whereas balanced accuracy is also about 78% for prediction on test data when we are predicting on random forest model using 3-fold cross validation.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 94%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 63%.
+</li></ul>
+
+
+
+
+###Oversampling to increase balanced accuracy
+
+```{r}
+library(ROSE) #Randomly OverSampling examples
+over <-ovun.sample(salary~.,data=train,method="over",N=34608)$data
+table(over$salary)
+
+
+
+```
+
+<ul style="list-style-type:disc;"><li>
+By doing oversampling now both the classes has equal number of observations that is 17304 for <=50K and 17304 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class. By doing oversampling we increased the number of observations to 17304 in both classes which was number of observations in >50k class in train dataset.
+</li></ul>
+
+###Predictive Model
+
+```{r}
+rfover <- randomForest(salary~.,data=over)
+rfover
+```
+
+<ul style="list-style-type:disc;"><li>
+After the over sampling of train data there is a significant decrease on OOB error which indicates increase in accuracy.</li></ul>
+
+
+ 
+```{r}
+rfover$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+
+###Predictive Model Evaluation with test data
+
+```{r}
+p2 <- predict(rfover,test)
+confusionMatrix(p2,test$salary) 
+
+```
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 84% whereas balanced accuracy is also about 82% for prediction on test data when we are predicting on random forest model after performing oversampling.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 86%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 78%.
+</li></ul>
+
+###Undersampling to increase balanced accuracy
+
+
+
+```{r}
+under <-ovun.sample(salary~.,data=train,method="under",N=10978)$data
+table(under$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>
+By doing undersampling now both the classes has equal number of observations that is 5489 for <=50K and 5489 for >50k.Earlier train dataset had 17304 observations for <=50k class and 5489 observations for >50k class.By doing undersampling we reduced the number of observations to 5489 in both classes which was number of observations in >50k class in train dataset.
+</li></ul>
+
+###Predictive Model
+
+
+```{r}
+
+rfunder <- randomForest(salary~.,data=under)
+rfunder
+```
+
+<ul style="list-style-type:disc;"><li>
+After the under sampling of train data there is no significant change in  OOB error which indicates there will be no significant change in accuracy.</li></ul>
+
+ 
+```{r}
+rfunder$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+
+p2 <- predict(rfunder,test)
+confusionMatrix(p2,test$salary)
+
+
+```
+
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 81% whereas balanced accuracy is also about 83% for prediction on test data when we are predicting on random forest model after performing oversampling.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 79%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 87%.
+</li></ul>
+
+###Performing both over sampling and undersampling to increase balanced accuracy
+
+```{r}
+both <-ovun.sample(salary~.,data=train,method="both",seed=222,N=22793)$data
+table(both$salary)
+
+```
+
+<ul style="list-style-type:disc;"><li>
+We have created possibly balanced samples by random over-sampling minority(>50k) examples, under-sampling majority(<=50k) examples or combination of over- and under-sampling.</li></ul>
+
+###Predictive Model
+
+
+```{r}
+
+rfboth <- randomForest(salary~.,data=both)
+rfboth
+```
+
+
+<ul style="list-style-type:disc;"><li>
+After the oversampling and undersampling of train data there is a significant decrease on OOB error which indicates increase in accuracy.</li></ul>
+
+ 
+```{r}
+rfboth$importance
+```
+ 
+Importance  measures  the total decrease in node impurities from splitting on the variable, averaged over all trees. For classification, the node impurity is measured by the Gini index. 
+
+###Predictive Model Evaluation with test data
+
+```{r}
+
+
+
+p2 <- predict(rfboth,test)
+confusionMatrix(p2,test$salary)
+
+
+```
+
+
+
+<ul style="list-style-type:disc;"><li>
+Accuracy(correct classifications / total classifications) is about 83% whereas balanced accuracy is also about 83% for prediction on test data when we are predicting on random forest model after performing undersampling.</li>
+<li>Sensitivity that is the number of correct positive predictions divided by the total number of positives is about 83%. Specificity that is the number of correct negative predictions divided by the total number of negatives is about 82%.
+</li></ul>
+
+
+
+
+<h2>Random Forest Inference:</h2>
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+output <- 
+  matrix(paste(c("Random Forest(With all variables)","~87%","~94%","63%","~79%","Random Forest(significant variables)","86%","~94%","63%","78%","Random Forest(ntree=100)","86%","~94%","63%","~79%","Random Forest(ntree=800)","86%","~94%","63%","~79%","Random Forest(ntree=1500)","~87%","~94%","~64%","~79%","Random Forest(Using Cross-Validation)","86%","~94%","~63%","78%","Random Forest(oversampling)","~85%","86","~79%","82%","Random Forest(undersampling)","~81%","79%","~87%","83%","Random Forest(over & under sampling)","~83%","83","~83%","~83%")), 
+         ncol=5, byrow = TRUE)
+library(htmlTable)
+htmlTable( output, header = paste(c("Models","Accuracy(Test Data)","Sensitivity","Specificity","Balanced Accuracy")), css.cell = rbind(rep("background: lightblue;", times=ncol(output)),matrix("", ncol=ncol(output), nrow=nrow(output))), col.rgroup = c("none", "light grey"))
+```
+
+
+<ul style="list-style-type:disc;"><li>The model using randomforest function gives higher accuracy when it has all the predictors included and number of trees are 500. </li>
+<li>The model's accuracy is almost same when we used different number of trees that is 100,800,1500 even balanced accuracy is also same that is 79%.</li>
+<li>The model's accuracy is almost same as other random forest model when we used 3-Fold cross validation method.</li>
+<li>After performing sampling there is a significant increase in specificity and balanced accuracy.</li>
+<li>Although there is a drop in overall accuracy but we need high balanced accuracy as there is class imbalance problem so we need good predictions on both classes</li>
+<li>So we will use the last two random forest model for prediction when number of trees were 500 and we performed over and undersampling and accuracy as well as balanced accuracy was highest.</li>
+</ul>
+
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+<h1 id="top5"><u>Conclusion</u></h1>
+
+
+
+
+In this study, we aimed to predict a person's income based on variables like native country, education, marital status, age, race, sex and others. We found in exploring this particular dataset that:
+
+<ul style="list-style-type:disc;">
+<li>Majority of people earn less than 50k.There is uneven distribution of data.</li>
+<li>Salary of people depends on age.People earning <50k are of age group 20 to 37 years whereas people who earn >50k are of age group 37 to 55 years.</li>
+<li> Majority of participants who earn more than 50k are married male whereas female are very less in number.</li>
+<li>Maximum participants are working in private job and are High school graduate.</li>
+<li>On an average people work for 40 hours in a week that is 8 hours in 5 days. </li>
+<li>Majority of population is of white race are from US.</li>
+<li>Very few people gained through capital gain or had loss due to capital loss.Thus capital gain and capital loss doesnot contribute much to the earning of majority of people.</li>
+<li> All of the  Pearson's chi-square tests give very small p-values, which means that it is very likely for the considered categorical variables - "education", "marital_status", "relationship", "native_country" and "hours_per_week"  to be related with "salary". T-Test of "age" also proves that "salary " dependent on age.</li>
+
+
+
+<li>We built several classification models to predict whether a random U.S. citizen earns more than 50K a year. We used logistic regression,decision tree, random forest. In the table below we summarize the accuracy, sensitivity, specificity and computational time on the test dataset for all fitted models.</li>
+</ul>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+output <- 
+  matrix(paste(c("Logistic Regression(over and undersampling)","~83%","~84%","~79%","81%","Decision Tree(over and undersampling)","~78%","75%","~86%","80%","Random Forest(undersampling)","~81%","79%","~87%","83%","Random Forest(over & undersampling)","~83%","83%","~83%","~83%" )),
+         ncol=5, byrow = TRUE)
+library(htmlTable)
+htmlTable( output, header = paste(c("Models","Accuracy","Sensitivity","Specificity","Balanced Accuracy")), css.cell = rbind(rep("background: lightblue;", times=ncol(output)),matrix("", ncol=ncol(output), nrow=nrow(output))), col.rgroup = c("none", "light grey"))
+```
+
+<ul style="list-style-type:disc;">
+<h4><i>
+<li>
+ From above table we determined that the Random Forest model(ntree=500) on which we performed over sampling and undersampling  gives the highest balanced accuracy(83%) whereas overall accuracy is highest ~83% among all the  models.Sensitivity and specificity(correctly predicting >50k) is also high for this model that is 83%.</li>
+<li>The Random Forest model(ntree=500) on which we performed undersampling also gives the highest balanced accuracy of 83% and a accuracy of ~81%.Sensitivity for this model is 83% whereas specificity(correctly predicting >50k) is also highest that is 83% .</li></ul>
+</i></h4>
+<li><a href="#top11">Go to top:Table of Contents</a></li>
+
+
+
+
+
